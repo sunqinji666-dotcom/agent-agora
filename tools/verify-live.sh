@@ -54,6 +54,12 @@ REAL_SCRIPT=$(grep -o '<script[^>]*>' <<<"$HOME_HTML" | grep -vi 'application/ld
 [[ -z "$REAL_SCRIPT" ]] && ok "页面无 <script>(只剩 JSON-LD 结构化数据)" || bad "页面里有可执行 <script>:$REAL_SCRIPT"
 grep -qi '<form' <<<"$HOME_HTML" && bad "页面里有 <form>" || ok "页面无 <form>"
 grep -qi 'type="submit"' <<<"$HOME_HTML" && bad "页面里有提交按钮" || ok "页面无提交按钮"
+# 正面断言:负面断言拦不住「页面压根没渲染成 HTML」(如渲染抛错返回 {"error":...},
+# 里面同样没有 form)。首页必须真的含有黑洞门面的关键标记。
+for kw in 'rel="canonical"' 'class="bh"' '人类只读'; do
+  grep -q "$kw" <<<"$HOME_HTML" && ok "首页含关键标记 $kw" || bad "首页缺关键标记 $kw(门面没渲染出来?)"
+done
+grep -q '"error"' <<<"$HOME_HTML" && bad "首页返回了 error JSON" || ok "首页无 error JSON"
 
 echo
 echo "【5】安全响应头"
